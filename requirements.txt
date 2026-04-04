@@ -1,0 +1,9 @@
+# MCP server framework
+mcp>=1.0.0
+
+# Stripe webhook handler
+flask>=3.0.0
+stripe>=8.0.0
+
+# x402 on-chain verification
+requests>=2.31.0
