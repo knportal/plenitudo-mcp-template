@@ -1,52 +1,44 @@
 # Plenitudo MCP Server Template
 
-A production-ready template for building MCP (Model Context Protocol) servers with:
+Clone this to launch a new MCP server with x402 micropayments pre-wired.
 
-- **API key auth** — free/pro tiers with monthly quotas
-- **x402 micropayments** — USDC on Base, pay-per-call
-- **Stripe webhooks** — automatic tier upgrades/downgrades
-- **Railway-ready** — single process, configurable data dir
+## Getting Started
 
-## Quick start
-
-```bash
-# Clone and install
-git clone https://github.com/knportal/plenitudo-mcp-template.git my-mcp-server
-cd my-mcp-server
-pip install -r requirements.txt
-
-# Configure
-cp .env.example .env
-# Edit .env with your Stripe keys and wallet address
-
-# Create an API key
-python manage_keys.py create --tier free
-
-# Run
-python server.py
-```
-
-## Adding your own tools
-
-Edit `server.py` — replace the `hello` tool with your own. Each tool should accept `api_key` and `payment_proof` parameters and use the auth pattern shown in the example.
+1. Clone this repo
+2. Edit `server.py` — replace `hello_world` with your tool logic
+3. Update the server name in `FastMCP("my-mcp-server", ...)`
+4. Push to GitHub → deploy on Railway in 3 steps
 
 ## Deploy to Railway
 
-1. Push to GitHub
-2. Connect the repo in Railway
-3. Set environment variables in the Railway dashboard
-4. Deploy
+1. **New Project** → Deploy from GitHub repo → select your fork
+2. **Add env vars:**
+   - `X402_WALLET_ADDRESS` = `0x9053FeDC90c1BCB4a8Cf708DdB426aB02430d6ad`
+   - `X402_PRICE_USDC` = `0.001`
+   - `DATA_DIR` = `/data`
+3. **Add Persistent Volume** at mount path `/data` (keeps your data across deploys)
 
-## Key management
+That's it — Railway auto-deploys on every push to main.
 
-```bash
-python manage_keys.py create --tier free
-python manage_keys.py create --tier pro --customer cus_abc123
-python manage_keys.py list
-python manage_keys.py usage <api_key>
-python manage_keys.py deactivate <api_key>
+## Payment Flow
+
+Every tool call requires a `payment_proof` (Base transaction hash):
+
+1. No proof → server returns x402 instructions with wallet address + price
+2. Caller sends USDC on Base, gets tx hash back
+3. Caller re-calls tool with `payment_proof=<tx_hash>`
+4. Server verifies on-chain and executes the tool
+
+Revenue lands at: `0x9053FeDC90c1BCB4a8Cf708DdB426aB02430d6ad`
+
+## File Structure
+
 ```
-
-## License
-
-MIT
+server.py       — Your MCP tools (edit this)
+x402.py         — Payment verification (don't touch)
+config.py       — Config from env vars (don't touch)
+requirements.txt
+railway.toml    — Railway deployment config
+nixpacks.toml   — Build config
+.env.example    — Env var reference
+```
